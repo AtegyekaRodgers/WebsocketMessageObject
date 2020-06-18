@@ -18,6 +18,7 @@ type WebsocketMessageObject struct {
 	jsonnLength uint32
 	stringzLength uint32
 	filez []*os.File   //array of files. functions will keep appending until Encode() is called
+	Fdata []byte
 	jsonn interface{} //variable to hold json object. A function will set it before Encode() is called
 	stringz []string  //array of strings. functions will keep appending until Encode() is called
 }
@@ -26,16 +27,16 @@ func NewWebsocketMessageObject() WebsocketMessageObject {
 	return WebsocketMessageObject{filezLength:0, jsonnLength:0, stringzLength:0 }
 }
 
-func NewWMO() WebsocketMessageObject {  
+func NewWMO() WebsocketMessageObject {
 	return WebsocketMessageObject{filezLength:0, jsonnLength:0, stringzLength:0 }
-} 
+}
 //=============================================================
-//---------------
-type wmoSectionReader struct { 
+//----------------
+type wmoSectionReader struct {
 	reader *bytes.Reader
 }
- 
-func newWmoSectionReader(dataFromClient interface{}) *wmoSectionReader { 
+
+func newWmoSectionReader(dataFromClient []byte) *wmoSectionReader {
 	bw := new(bytes.Buffer)
 	_ = binary.Write(bw,binary.BigEndian,dataFromClient)
 	breader := bytes.NewReader(bw.Bytes())
@@ -46,7 +47,7 @@ func (wsr *wmoSectionReader) ReadAt(dat []byte,offset int64) (int, error) {
 	n, err := wsr.reader.ReadAt(dat,offset)
 	if err != nil {
 		return n, err
-	}   
+	}
 	return n, nil
 }
 //----------------
@@ -86,16 +87,16 @@ type wmoFilesHeader struct {
 }
 //----
 type wmoHeaderReader struct { 
-	sreader *io.SectionReader
+	sreader io.SectionReader
 } 
-func newWmoHeaderReader(dataFromClient interface{}) wmoHeaderReader {
+func newWmoHeaderReader(dataFromClient []byte) wmoHeaderReader {
 	//create a new Buffer
-	tempheaderbuf := new(bytes.Buffer)
+	var tempheaderbuf bytes.Buffer
 	//define a write func for the above writer
-	_ = binary.Write(tempheaderbuf,binary.BigEndian,dataFromClient)
+	_ = binary.Write(&tempheaderbuf,binary.LittleEndian,dataFromClient)
 	reader := bytes.NewReader(tempheaderbuf.Bytes())
-	sr := io.NewSectionReader(reader, 0, 30)
-	return wmoHeaderReader{sreader: sr}
+	sr := io.NewSectionReader(reader, 0, 29)
+	return wmoHeaderReader{sreader: *sr}
 } 
 func (whr *wmoHeaderReader) Read(hd []byte) (int, error) {
 	n, err := whr.sreader.Read(hd)
@@ -112,20 +113,14 @@ func (whr *wmoHeaderReader) ReadAt(hd []byte,offst int64) (int, error) {
 		return n, nil
 }
 
-  func readWmoHeader(dataFromClient []byte) *wmoHeader {
-		wmoheader := &wmoHeader{}
-		headreader := newWmoHeaderReader(dataFromClient)
-		headerBuf := make([]byte, 29) 
-		_, er := headreader.Read(headerBuf) 
-		if er != nil {
-			log.Fatal("readWmoHeader: headreader.Read failed", er)
-		}
-		headerBufReader := bytes.NewReader(headerBuf)
+  func readWmoHeader(dataFromClient []byte) wmoHeader {
+		var wmoheader wmoHeader
+		headerBuf := bytes.NewBuffer(dataFromClient[:29])
+		headerBufReader := bytes.NewReader(headerBuf.Bytes())
 		err := binary.Read(headerBufReader, binary.LittleEndian, &wmoheader)
 		if err != nil {
 			log.Fatal("readWmoHeader: binary.Read failed; ", err)
-		} 
-		//fmt.Printf("Parsed data:\n%+v\n", wmoheader)
+		}
 		return wmoheader
 	}
 	
@@ -134,12 +129,11 @@ func (whr *wmoHeaderReader) ReadAt(hd []byte,offst int64) (int, error) {
 func (wmo *WebsocketMessageObject) DecodeJson(dataFromClient []byte) string {
 	hedr := readWmoHeader(dataFromClient)
 	jsonReader := bytes.NewBuffer(dataFromClient[hedr.JsonOffset:(hedr.JsonOffset+hedr.JsonSize)])
-	var jsonBuf bytes.Buffer
-	_ = binary.Read(jsonReader,binary.BigEndian,&jsonBuf)
-	jsonstr := " "
-	if json.Valid(jsonBuf.Bytes()) {
-		_ = json.Unmarshal(jsonBuf.Bytes(), &jsonstr);
-	} 
+	jsonstr := string(jsonReader.Bytes()) 
+	//if json.Valid(jsonBuf.Bytes()) {
+		 
+	//}
+	log.Println("decodeJson: jsonstr = ",jsonstr)
 	return jsonstr 
 }
 
@@ -158,7 +152,7 @@ func (wmo *WebsocketMessageObject) DecodeFiles(dataFromClient []byte) []*os.File
 	_ = binary.Read(readr, binary.LittleEndian, &wmofheader)
 	//-------- 
 	var allFiles []*os.File 
-	i:=0 
+	i:=0
 	for i<int(wmofheader.NumberOfFiles) {
 		var oneFile *os.File
 		oneFileBuf := bytes.NewBuffer(filesBytes[wmofheader.EachFileOffset[i]:(wmofheader.EachFileOffset[i]+wmofheader.EachFileSize[i])]) 
@@ -167,16 +161,13 @@ func (wmo *WebsocketMessageObject) DecodeFiles(dataFromClient []byte) []*os.File
 		allFiles = append(allFiles, oneFile)
 		i++
 	}
-	 
 	return allFiles
 } 
 
 func (wmo *WebsocketMessageObject) DecodeStringAll(dataFromClient []byte) map[string]string {
-	hedr := readWmoHeader(dataFromClient)
-	strReader := bytes.NewBuffer(dataFromClient[hedr.StringsOffset:(hedr.StringsOffset+hedr.StringsSize)])
-	var strBuf bytes.Buffer
-		_ = binary.Read(strReader,binary.BigEndian,&strBuf)  
-	stringz := string(strBuf.Bytes()) 
+	hedr := readWmoHeader(dataFromClient) 
+	strReader := bytes.NewBuffer(dataFromClient[hedr.StringsOffset:(hedr.StringsOffset+hedr.StringsSize)]) 
+	stringz := string(strReader.Bytes()) 
 	//split the 'stringz' content using dilimitors and create a map of strings with string keys.
 	strArray := strings.Fields(stringz) //splitting using spaces: stringz = 'key1-value1 key2-value2 key3-value3 ...'
 	newStrMap := map[string]string{}
@@ -184,12 +175,12 @@ func (wmo *WebsocketMessageObject) DecodeStringAll(dataFromClient []byte) map[st
 		strkey := strings.Split(keyAndVal,"-")[0]
 		strval := strings.Split(keyAndVal,"-")[1]
 		newStrMap[strkey] = strval
-	} 
+	}
 	return newStrMap 
 }
 
 func (wmo *WebsocketMessageObject) DecodeString(dataFromClient []byte,strkey string) string {
-	newStrMap := wmo.DecodeStringAll(dataFromClient)
+	newStrMap := wmo.DecodeStringAll(dataFromClient) 
 	return newStrMap[strkey]
 }
 
@@ -271,31 +262,31 @@ func (wmo *WebsocketMessageObject) AddString(keyy string,mystring string) {
 	wmo.addToStringsSize(uint32(str_size))
 }
 
-func uint32toBinary(uint32num uint32) []byte {
+func Uint32toBinary(uint32num uint32) []byte {
 	var buf bytes.Buffer
 	mywriter := io.MultiWriter(&buf)
 	_ = binary.Write(mywriter,binary.BigEndian,uint32num)
 	return buf.Bytes()
 }
-func uint8toBinary(uint8num uint8) []byte {
+func Uint8toBinary(uint8num uint8) []byte {
 	var buf bytes.Buffer
-		mywriter := io.MultiWriter(&buf)
-		_ = binary.Write(mywriter,binary.BigEndian,uint8num)
-		return buf.Bytes()
+	mywriter := io.MultiWriter(&buf)
+	_ = binary.Write(mywriter,binary.BigEndian,uint8num)
+	return buf.Bytes()
 }
  
 func (wmo *WebsocketMessageObject) Encode() {
 	/*
               
-	0                    28    34               files-content         json                            strings
-	|--,--,--,--,--,--,--|~~~~~|--,--,...,--,...|-----,-------,---,...|-------------------------------|-------|
-	wmo-header                 files-header
-	                           0                                      #
-	                           |<-----------------files-------------->|
-	*/
+	0                    28   31               files-content         json                            strings
+	|--,--,--,--,--,--,--|-|~~|--,--,...,--,...|-----,-------,---,...|-------------------------------|-------|
+	wmo-header                files-header
+	                          0                                      #
+	                          |<-----------------files-------------->|
+	*/ 
 	
-	var filez_start_point uint32 
-	var json_start_point uint32 
+	var filez_start_point uint32
+	var json_start_point uint32
 	var stringz_start_point uint32
 	 
 	  var file_offset_readers []io.Reader
@@ -316,7 +307,7 @@ func (wmo *WebsocketMessageObject) Encode() {
 	  wmo_offset_track =34 + size_of_files_header  //increment the '*_track' by 'size_of_files_header'
 	  files_ofst_track = 0 + size_of_files_header 
 	   
-		for _, fi := range wmo.filez { 
+		for _, fi := range wmo.filez {
 			fileinfo, err := fi.Stat()
 			if err != nil {
 				log.Fatal(err)
@@ -328,23 +319,47 @@ func (wmo *WebsocketMessageObject) Encode() {
 				log.Fatal(err)
 			} 
 		  //create an io reader with data fbytes[:n]
-		  bytesreader := bytes.NewReader(fbytes) 
-		  file_data_readers=append(file_data_readers,bytesreader)
+		  fbytesreader := bytes.NewReader(fbytes) 
+		  file_data_readers=append(file_data_readers,fbytesreader)
 		  fiLength:= uint32(n) 
-		  size_reader := bytes.NewReader(uint32toBinary(fiLength)) 
+		  size_reader := bytes.NewReader(Uint32toBinary(fiLength)) 
 		  file_size_readers=append(file_size_readers,size_reader)
-		  offset_reader := bytes.NewReader(uint32toBinary(uint32(files_ofst_track)))
+		  offset_reader := bytes.NewReader(Uint32toBinary(uint32(files_ofst_track)))
 		  file_offset_readers=append(file_offset_readers,offset_reader)
 		  total_size_of_files += fiLength
 		  files_ofst_track += fiLength
 		  wmo_offset_track += fiLength
 	  }
-	  filesDataMultiReader := io.MultiReader(file_data_readers...)
-	  fileOffsetsMultiReader := io.MultiReader(file_offset_readers...)
-	  fileSizesMultiReader := io.MultiReader(file_size_readers...)
-	  no_of_files_reader := bytes.NewReader(uint8toBinary(uint8(numberoffilez)))
-	  allFilesDataReader := io.MultiReader(no_of_files_reader,fileOffsetsMultiReader,fileSizesMultiReader,filesDataMultiReader)
-	  
+	  var filesDataMultiReader io.Reader
+	  var fileOffsetsMultiReader io.Reader
+	  var fileSizesMultiReader io.Reader
+	  var no_of_files_reader io.Reader
+	  var allFilesDataReader io.Reader
+	  if numberoffilez > 0 {
+		  filesDataMultiReader = io.MultiReader(file_data_readers...)
+		  fileOffsetsMultiReader=io.MultiReader(file_offset_readers...)
+		  fileSizesMultiReader = io.MultiReader(file_size_readers...)
+		  no_of_files_reader = bytes.NewReader(Uint8toBinary(uint8(numberoffilez)))
+		  allFilesDataReader = io.MultiReader(no_of_files_reader,fileOffsetsMultiReader,fileSizesMultiReader,filesDataMultiReader)
+	  }else{
+		  no_of_files_reader = bytes.NewReader(Uint8toBinary(uint8(numberoffilez)))
+		  newreadr := bytes.NewBuffer(wmo.Fdata)
+		  if len(newreadr.Bytes()) > 0 {
+			  allFilesDataReader = newreadr 
+			  nofbyteReader := bytes.NewReader(wmo.Fdata[:1]) //byte bits representing number of files
+			  var nof uint8
+			  _ = binary.Read(nofbyteReader,binary.BigEndian,nof) // decode into a uint8 number
+			  size_of_files_header = uint32(uint8(1)+(nof*uint8(4+4))) //calculate size of files header using number of files value 
+		  }else{
+			  allFilesDataReader = no_of_files_reader
+		  } 
+		  total_size_of_files = uint32(len(wmo.Fdata))
+		  if total_size_of_files > 1 {
+			  wmo_offset_track += (total_size_of_files-1)
+			}else{
+				total_size_of_files = 1  //must not be less than this.
+			}  
+	  }
 		 //read everything that is in 'wmo.jsonn', stringfy & make it binary, also create a reader out of it
 	 	 jsonnstr, err := json.Marshal(wmo.jsonn)
 		 if err != nil {
@@ -363,7 +378,7 @@ func (wmo *WebsocketMessageObject) Encode() {
 		for _,oneStr := range wmo.stringz { 
 			 tmpStr = tmpStr+" "+oneStr
 		} 
-		tmpStrBytes := []byte(tmpStr) 
+		tmpStrBytes := []byte(tmpStr)
 		all_strings_size := uint32(len(tmpStrBytes))
 		strings_data_reader := bytes.NewReader(tmpStrBytes)
 		stringz_start_point = wmo_offset_track
@@ -372,34 +387,34 @@ func (wmo *WebsocketMessageObject) Encode() {
 	  //==writing headers== 
 	  filez_start_point = 34 //28+6=34, offset: beginning of 34th byte
 	  wmo_offset_track = filez_start_point
-	  files_ofst_track = 0
-	  //tempbufsectwriter.WriteAt(numberoffilez, wmo_offset_track) //numberoffilez is the value writen at offset 34 = filez_start_point             
-	  files_ofst_track += 1   //now, files_ofst_track = 1
-	  wmo_offset_track += 1   //now, wmo_offset_track = 35
-		
-		//reset the wmo_offset_track
-	  wmo_offset_track=0 
+		 
+	  //readers for all wmo header values 
+	  start_of_files_reader := bytes.NewReader(Uint32toBinary(uint32(34))) //34 => filez_start_point 
 	  
-		//readers for all wmo header values 
-	  start_of_files_reader := bytes.NewReader(uint32toBinary(uint32(34))) //34 => filez_start_point
-	  wmo_offset_track += 4 
-	  size_of_files_header_reader := bytes.NewReader(uint32toBinary(uint32(size_of_files_header))) 
-	  wmo_offset_track += 4 
-	  total_size_of_files_reader := bytes.NewReader(uint32toBinary(uint32(total_size_of_files)))
-	  wmo_offset_track += 4 
-	  json_start_point_reader := bytes.NewReader(uint32toBinary(uint32(json_start_point))) 
-	  wmo_offset_track += 4 
-	  json_size_reader := bytes.NewReader(uint32toBinary(uint32(json_size)))
-	  wmo_offset_track += 4 
-	  stringz_start_point_reader := bytes.NewReader(uint32toBinary(uint32(stringz_start_point)))
-	  wmo_offset_track += 4 
-	  all_strings_size_reader := bytes.NewReader(uint32toBinary(uint32(all_strings_size))) 
+	  size_of_files_header_reader := bytes.NewReader(Uint32toBinary(uint32(size_of_files_header))) 
+	  
+	  total_size_of_files_reader := bytes.NewReader(Uint32toBinary(uint32(total_size_of_files))) 
+	  
+	  json_start_point_reader := bytes.NewReader(Uint32toBinary(uint32(json_start_point))) 
+	  
+	  json_size_reader := bytes.NewReader(Uint32toBinary(uint32(json_size)))
+	  
+	  stringz_start_point_reader := bytes.NewReader(Uint32toBinary(uint32(stringz_start_point))) 
+	  
+	  all_strings_size_reader := bytes.NewReader(Uint32toBinary(uint32(all_strings_size))) 
+	  
 	  allWmoHeadersReader := io.MultiReader(start_of_files_reader,size_of_files_header_reader,total_size_of_files_reader,json_start_point_reader, json_size_reader, stringz_start_point_reader,all_strings_size_reader)
-	  dontCareBytesReader := bytes.NewReader(uint32toBinary(uint32(0))) 
+		  dontcarepart1 := bytes.NewReader(Uint8toBinary(uint8(0)))
+		  dontcarepart2 := bytes.NewReader(Uint8toBinary(uint8(0)))
+		  dontcarepart3 := bytes.NewReader(Uint32toBinary(uint32(0)))
+	  dontCareBytesReader := io.MultiReader(dontcarepart1,dontcarepart2,dontcarepart3)
 	  
-	  tempBufferReader := io.MultiReader(allWmoHeadersReader,dontCareBytesReader,allFilesDataReader,json_data_reader,strings_data_reader)
-	   
-	  //encode our data into the wmo.BinaryData from tempBufferReader, being able to specify the Endianness.
+	  allDataReader := io.MultiReader(allWmoHeadersReader,dontCareBytesReader,allFilesDataReader,json_data_reader,strings_data_reader)
+	  
+	  var tempBuffer bytes.Buffer
+	  tempBufferReader := &tempBuffer
+	  _,_ = io.Copy(&tempBuffer,allDataReader)
+	  //encode our data into the wmo.BinaryData from tempBufferReader, being able to specify the Endianness. 
 	  _ = binary.Read(tempBufferReader,binary.BigEndian,&wmo.BinaryData)
 	  
 	  //DONE !
@@ -407,6 +422,60 @@ func (wmo *WebsocketMessageObject) Encode() {
 	  //ie, ws.send(wmo.BinaryData) . This sends the encoded data to the client in plain binary form
 }
 
-//===============================================END====================================================
- 
+//===================================================================================================
+
+
+
+/*
+ * 
+ golang how to determine length of an array
+ golang how to push to an array:  
+	  a := []int{1,2,3}
+	  a = append(a, 4)
+	  fmt.Println(a)
+	  append(a[:3], 5)
+	  fmt.Println(a)
+	//----
+		package main
+
+		import (
+		    "fmt"
+		)
+
+		var a = make([]int, 7, 8)
+		// A slice is a descriptor of an array segment. 
+		// It consists of a pointer to the array, the length of the segment, and its capacity (the maximum length of the segment).
+		// The length is the number of elements referred to by the slice.
+		// The capacity is the number of elements in the underlying array 
+		//(beginning at the element referred to by the slice pointer).
+		// |-> Refer to: https://blog.golang.org/go-slices-usage-and-internals -> "Slice internals" section
+
+		func Test(slice []int) {
+		    // slice receives a copy of slice `a` which point to the same array as slice `a`
+		    slice[6] = 10
+		    slice = append(slice, 100)
+		    // since `slice` capacity is 8 & length is 7, it can add 100 and make the length 8
+		    fmt.Println(slice, len(slice), cap(slice), " << Test 1")
+		    slice = append(slice, 200)
+		    // since `slice` capacity is 8 & length also 8, slice has to make a new slice 
+		    // - with double of size with point to new array (see Reference 1 below).
+		    // (I'm also confused, why not (n+1)*2=20). But make a new slice of 16 capacity).
+		    slice[6] = 13 // make sure, it's a new slice :)
+		    fmt.Println(slice, len(slice), cap(slice), " << Test 2")
+		}
+
+		func main() {
+		    for i := 0; i < 7; i++ {
+		        a[i] = i
+		    }
+
+		    fmt.Println(a, len(a), cap(a))
+		    Test(a)
+		    fmt.Println(a, len(a), cap(a))
+		    fmt.Println(a[:cap(a)], len(a), cap(a))
+		    // fmt.Println(a[:cap(a)+1], len(a), cap(a)) -> this'll not work
+		}
+//---- 
+
+ */
 
