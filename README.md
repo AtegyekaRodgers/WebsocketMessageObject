@@ -79,11 +79,13 @@ let strMap = wmo.DecodeStringAll(messageFromServer);
 //returns a map of key-vale pairs of strings.
 ```
 ```javascript 
-let filesArray = wmo.DecodeFiles();
+let filesArray = wmo.DecodeFiles(messageFromServer);
 ```
 ```javascript 
-let filesBytes = wmo.ReadFilesBytes(dataFromServer);    
+let filesBytes = wmo.ReadFilesBytes(messageFromServer);    
 //returns all files data in plain binary format
 ``` 
 
+# NOTE: 'messageFromServer' MUST be a binary format message encoded using the server side version of wmo. This is currently available only in Go (Golang). I am still implementing wmo for other languages. 
 
+I welcome anyone who want to contribute to this project especially in other languages.
