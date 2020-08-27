@@ -50,32 +50,39 @@ wmo.Encode();
 # List of functions available (API)
 
 ## Adding data to encode
-
-wmo.AddFile(file);
-
+```javascript
+wmo.AddFile(file); 
+```
+```javascript 
 wmo.AddFileFrom("file-input-id");
-
+```
+```javascript 
 wmo.AddJson({jsonobject});
-
+```
+```javascript 
 wmo.AddString("key","string you intend to add"); 
 // eg wmo.AddString("name","Rodgers"); 
-
+```
+```javascript 
 wmo.Encode();
-
-## Decoding data received from server
-
+``` 
+## Decoding data received from server 
+```javascript 
 let jsondata = wmo.DecodeJson(messageFromServer);
-
+```
+```javascript 
 let mystr = wmo.DecodeString(messageFromServer, "key"); 
 // eg, let myname = wmo.DecodeString("name"); => returns a name such as 'Rodgers'
-
+```
+```javascript 
 let strMap = wmo.DecodeStringAll(messageFromServer);    
 //returns a map of key-vale pairs of strings.
-
+```
+```javascript 
 let filesArray = wmo.DecodeFiles();
 
 let filesBytes = wmo.ReadFilesBytes(dataFromServer);    
 //returns all files data in plain binary format
-
+``` 
 
 
