@@ -86,6 +86,7 @@ let filesBytes = wmo.ReadFilesBytes(messageFromServer);
 //returns all files data in plain binary format
 ``` 
 
-# NOTE: 'messageFromServer' MUST be a binary format message encoded using the server side version of wmo. This is currently available only in Go (Golang). I am still implementing wmo for other languages. 
+# NOTE: 
+### 'messageFromServer' MUST be a binary format message encoded using the server side version of wmo. This is currently available only in Go (Golang). I am still implementing wmo for other languages. 
 
 I welcome anyone who want to contribute to this project especially in other languages.
