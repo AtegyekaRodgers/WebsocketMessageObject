@@ -1,5 +1,5 @@
-
-//+++++++++++++++++++++++++++++++++++++++++ wmo start +++++++++++++++++++++++++++++++++++++++++++++++
+//THIS IS THE PLAIN JAVASCRIPT VERSION OF WebsocketMessageObject FOR ANYONE WHO MAY NOT WANT USE THE NODE JS VERSION.
+//+++++++++++++++++++++++++++++++++++++++++ wmo +++++++++++++++++++++++++++++++++++++++++++++++
 let wmoHeader = {
 	FilesHeaderOffset:0,
 	FilesHeaderSize:0,
