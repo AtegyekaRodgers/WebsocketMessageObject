@@ -1,7 +1,10 @@
 # WebsocketMessageObject
 WebsocketMessageObject is an API that enables you to package any type of data into a single (binary format) massage so that you can easily send it over websocket protocol. You simply create a wmo object and keep adding any data into it by calling the appropriate functions provided in the API, then finally call the 'Encode' function which converts everything into a stream of binary data that you can send to your back-end server using the 'websocket.send(theBinaryData)' function. You can add images, videos, documents, json data as well as plain text data.
 
-## Installation
+## Installation 1
+
+### Let's start with the front-end version, (npm package in javascript). 
+The Golang version will be explained after javascript. Please scroll down.
 
 To use Websocket Message Object API, install it as a dependency:
 
@@ -90,3 +93,31 @@ let filesBytes = wmo.ReadFilesBytes(messageFromServer);
 ### 'messageFromServer' MUST be a binary format message encoded using the server side version of wmo. This is currently available only in Go (Golang). I am still implementing wmo for other languages. 
 
 I welcome anyone who want to contribute to this project especially in other languages.
+
+## Installation 2
+### Now the go back-end. 
+This is how to import the Go package into your project.
+
+```bash
+## run this command:
+
+$ go get "github.com/AtegyekaRodgers/WebsocketMessageObject"
+
+```
+Then import the package into your application
+```go
+package main
+
+import (
+  "fmt"
+  wmo "github.com/AtegyekaRodgers/WebsocketMessageObject"
+  //...
+  //...
+)
+
+func main(){
+  //...
+}
+
+```
+
