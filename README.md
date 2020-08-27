@@ -93,13 +93,14 @@ let filesBytes = wmo.ReadFilesBytes(messageFromServer);
 ### 'messageFromServer' MUST be a binary format message encoded using the server side version of wmo. This is currently available only in Go (Golang). I am still implementing wmo for other languages. 
 
 I welcome anyone who want to contribute to this project especially in other languages.
+## ___
 
 ## Installation 2
 ### Now the go back-end. 
 This is how to import the Go package into your project.
 
-```bash
-## run this command:
+Run this command:
+```bash 
 
 $ go get "github.com/AtegyekaRodgers/WebsocketMessageObject"
 
