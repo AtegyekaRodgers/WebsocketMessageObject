@@ -70,12 +70,12 @@ let mystr = wmo.DecodeString(messageFromServer, "key");
 // eg, let myname = wmo.DecodeString("name"); => returns a name such as 'Rodgers'
 
 let strMap = wmo.DecodeStringAll(messageFromServer);    
-// returns a map of key-vale pairs of strings.
+//returns a map of key-vale pairs of strings.
 
 let filesArray = wmo.DecodeFiles();
 
 let filesBytes = wmo.ReadFilesBytes(dataFromServer);    
-// returns all files data in plain binary format
+//returns all files data in plain binary format
 
 
 
