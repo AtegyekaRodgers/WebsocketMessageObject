@@ -80,7 +80,8 @@ let strMap = wmo.DecodeStringAll(messageFromServer);
 ```
 ```javascript 
 let filesArray = wmo.DecodeFiles();
-
+```
+```javascript 
 let filesBytes = wmo.ReadFilesBytes(dataFromServer);    
 //returns all files data in plain binary format
 ``` 
