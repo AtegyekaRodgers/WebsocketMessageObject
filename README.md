@@ -7,10 +7,12 @@ To use Websocket Message Object API, install it as a dependency:
 
 ```bash
 # If you use npm:
-npm install websocket-message-object
+
+$ npm install websocket-message-object
 
 # Or if you use Yarn:
-yarn add websocket-message-object
+
+$ yarn add websocket-message-object
 ```
 
 ## Usage
@@ -26,8 +28,10 @@ import {WebsocketMessageObject} from 'websocket-message-object';
 
 const wmo = require("websocket-message-object");
 
-# Now that yiu have a wmo object created, you can add any data to it. Here is how to add an image file.
-wmo.AddFile(file); //NOTE: This assumes you alredy have a file object read from the DOM eg using FileReader
+# Now that you have a wmo object created, you can add any data to it. Here is how to add an image file.
+
+wmo.AddFile(file); 
+//NOTE: This assumes you alredy have a file object read from the DOM eg using FileReader
 
 //If you want to add the file directly from the html file input field, use this method:
 wmo.AddFileFrom("id-of-the-html-file-input"); 
@@ -53,7 +57,8 @@ wmo.AddFileFrom("file-input-id");
 
 wmo.AddJson({jsonobject});
 
-wmo.AddString("key","string you intend to add"); // eg wmo.AddString("name","Rodgers"); 
+wmo.AddString("key","string you intend to add"); 
+// eg wmo.AddString("name","Rodgers"); 
 
 wmo.Encode();
 
@@ -61,13 +66,16 @@ wmo.Encode();
 
 let jsondata = wmo.DecodeJson(messageFromServer);
 
-let mystr = wmo.DecodeString(messageFromServer, "key"); // eg, let myname = wmo.DecodeString("name"); => returns a name such as 'Rodgers'
+let mystr = wmo.DecodeString(messageFromServer, "key"); 
+// eg, let myname = wmo.DecodeString("name"); => returns a name such as 'Rodgers'
 
-let strMap = wmo.DecodeStringAll(messageFromServer);    // returns a map of key-vale pairs of strings.
+let strMap = wmo.DecodeStringAll(messageFromServer);    
+// returns a map of key-vale pairs of strings.
 
 let filesArray = wmo.DecodeFiles();
 
-let filesBytes = wmo.ReadFilesBytes(dataFromServer);    // returns all files data in plain binary format
+let filesBytes = wmo.ReadFilesBytes(dataFromServer);    
+// returns all files data in plain binary format
 
 
 
