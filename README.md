@@ -1,2 +1,2 @@
 # WebsocketMessageObject
-WebsocketMessageObject is an API for maximizing the capabilties of websockets and overcome all the weaknesses of http.
+WebsocketMessageObject is an API that nables you to package any type of data into a single (binary format) massage so that you can easily send it over websocket protocol. You simply create a wmo object and keep adding any data into it by calling the appropriate functions inthe API, then finally call the 'finish' function which converts everything into a stream of binary data tht you can send to your back-end server using the websocket.send(theBinaryData) function.
