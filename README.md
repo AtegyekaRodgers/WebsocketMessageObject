@@ -47,9 +47,9 @@ wmo.AddFileFrom("id-of-the-html-file-input");
 wmo.Encode();
 
 ```
-## List of functions available (API)
+# List of functions available (API)
 
-# Adding data to encode
+## Adding data to encode
 
 wmo.AddFile(file);
 
@@ -62,7 +62,7 @@ wmo.AddString("key","string you intend to add");
 
 wmo.Encode();
 
-# Decoding data received from server
+## Decoding data received from server
 
 let jsondata = wmo.DecodeJson(messageFromServer);
 
