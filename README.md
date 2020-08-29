@@ -20,22 +20,23 @@ $ yarn add websocket-message-object
 
 ## Usage
 
+ First, you need to import the module into your application as follows:
+
+ In a react app,
 ```javascript
-#First, you need to import the module into your application as follows:
-
-# In a react app,
-
 import {WebsocketMessageObject} from 'websocket-message-object';
 
-# Or if you are not using react;
-
+```
+ Or if you are not using react;
+```javascript
 const wmo = require("websocket-message-object");
 
-# Now that you have a wmo object created, you can add any data to it. Here is how to add an image file.
-
+```
+ Now that you have a wmo object created, you can add any data to it. Here is how to add an image file.
+```javascript
 wmo.AddFile(file); 
 //NOTE: This assumes you alredy have a file object read from the DOM eg using FileReader
-
+ 
 //If you want to add the file directly from the html file input field, use this method:
 wmo.AddFileFrom("id-of-the-html-file-input"); 
 
@@ -45,8 +46,9 @@ wmo.AddFileFrom("id-of-the-html-file-input");
 //...
 //...
 
-# And now, if you're done with adding data, fire the function that does the encoding for you automatically like so:
-
+```
+ And now, if you're done with adding data, fire the function that does the encoding for you automatically like so:
+```javascript
 wmo.Encode();
 
 ```
