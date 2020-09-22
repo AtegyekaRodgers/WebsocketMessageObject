@@ -4,12 +4,12 @@ WebsocketMessageObject is an API that enables you to package any type of data in
 # Why websocket protocol ?
 Websocket protocol is a much better means of data communication over the web as it really overcomes all the weaknesses of http. But why do web developers still choose http? The answer is, websocket is not easy for a regular developer to get started with. Since websocket requires that data should mainly be transmitted in binary format, many developers find it difficult to do the dirty work of encoding and decoding data at both ends (the client and the server). This is the major problem which WebsocketMessageObject API (wmo for short) is here to solve.
 
-##Compare websocket with http 
+## Compare websocket with http 
 There are thousands of resources online clearly explaining the strengths of websocket over http, and why the world of web development really needs to shift from http completely to websocket protocol.
 The book titled "The definitive guide to html5 websocket" is one of the best I found very useful and clear.
-###More resources:
-http://www.websocket.org/quantum.html
-https://www.ably.io/blog/websockets-vs-long-polling/
+### More resources:
+http://www.websocket.org/quantum.html \n
+https://www.ably.io/blog/websockets-vs-long-polling/ \n
 https://www.geeksforgeeks.org/what-is-web-socket-and-how-it-is-different-from-the-http/
 
 ## Installation 1 (javascript)
