@@ -12,7 +12,7 @@ http://www.websocket.org/quantum.html <br/>
 https://www.ably.io/blog/websockets-vs-long-polling/ <br/>
 https://www.geeksforgeeks.org/what-is-web-socket-and-how-it-is-different-from-the-http/
 
-## Installation 1 (javascript)
+## Installation 1
 
 ### Let's start with the front-end version, (npm package in javascript). 
 The Golang version will be explained after javascript. Please scroll down.
