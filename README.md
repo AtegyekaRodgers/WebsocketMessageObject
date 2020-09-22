@@ -8,8 +8,8 @@ Websocket protocol is a much better means of data communication over the web as 
 There are thousands of resources online clearly explaining the strengths of websocket over http, and why the world of web development really needs to shift from http completely to websocket protocol.
 The book titled "The definitive guide to html5 websocket" is one of the best I found very useful and clear.
 ### More resources:
-http://www.websocket.org/quantum.html \n
-https://www.ably.io/blog/websockets-vs-long-polling/ \n
+http://www.websocket.org/quantum.html <br/>
+https://www.ably.io/blog/websockets-vs-long-polling/ <br/>
 https://www.geeksforgeeks.org/what-is-web-socket-and-how-it-is-different-from-the-http/
 
 ## Installation 1 (javascript)
