@@ -20,13 +20,15 @@ The Golang version will be explained after javascript. Please scroll down.
 
 To use Websocket Message Object API, install it as a dependency:
 
+If you use npm:
+
 ```bash
-# If you use npm:
-
 $ npm install websocket-message-object
+```
+Or if you use Yarn:
 
-# Or if you use Yarn:
 
+```bash
 $ yarn add websocket-message-object
 ```
 
