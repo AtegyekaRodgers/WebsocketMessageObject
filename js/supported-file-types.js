@@ -87,7 +87,7 @@ module.exports.findFileTypeIndex = (filetype)=>{
     console.warn("Encoding/decoding of unsupported file type: '"+filetype+"' skipped.");
     return 99;  //this will be used to indicate that file format is unsupported.
 };
-
+ 
 module.exports.countSupportedFilesOnly = (filezArray)=>{
     let numberOfSupportedFiles = 0;
     for(var i in filezArray){
@@ -181,5 +181,3 @@ module.exports.countSupportedFilesOnly = (filezArray)=>{
     .3g2	3GPP2 audio/video container	                        video/3gpp2 audio/3gpp2 if it doesn't contain video 
     .7z	7-zip archive	                                        application/x-7z-compressed
     */
-
-

@@ -1,5 +1,3 @@
-//THIS IS THE PLAIN JAVASCRIPT VERSION OF WebsocketMessageObject FOR ANYONE WHO MAY NOT WANT USE THE NODE JS VERSION.
-//+++++++++++++++++++++++++++++++++++++++++ wmo +++++++++++++++++++++++++++++++++++++++++++++++
 var filetypes = [
     {type:"audio/aac",extension:".aac",description:"AAC audio"},
     {type:"application/x-abiword",extension:".abw",description:"AbiWord document"},
@@ -122,30 +120,37 @@ let wmoHeader = {
 }; 
 
 function readWmoHeader(dataFromServer){
-	var BIGendian = false;
-	var LITTLEendian = true;                          //  0                    28   
-	let wmoHeaderBinary = new Uint32Array(dataFromServer,0, 8); //  |--,--,--,--,--,--,--|~~~ //NOTE:assumption is, dataFromServer came as an arrayBuffer
-	let wmoheader = {
-		FilesHeaderOffset:Number(wmoHeaderBinary.getUint32(0,BIGendian)),
-		FilesHeaderSize:Number(wmoHeaderBinary.getUint32(1,BIGendian)),
-		FilesTotalSize:Number(wmoHeaderBinary.getUint32(2,BIGendian)),
-		JsonOffset:Number(wmoHeaderBinary.getUint32(3,BIGendian)),
-		JsonSize:Number(wmoHeaderBinary.getUint32(4,BIGendian)),
-		StringsOffset:Number(wmoHeaderBinary.getUint32(5,BIGendian)),
-		StringsSize:Number(wmoHeaderBinary.getUint32(6,BIGendian))
-	};
-	return wmoheader;
+	//NOTE: dataFromServer is expected to be an ArrayBuffer. 
+    //If not, first convert the dataFromServer into ArrayBuffer, then pass to this function. 
+    var BIGendian = false;
+    var LITTLEendian = true;
+    let dataView = new DataView(dataFromServer);
+    console.log("dataView.byteLength = "+dataView.byteLength);
+    let wmoheader = {
+	    FilesHeaderOffset:Number(dataView.getUint32(0,BIGendian)),
+	    FilesHeaderSize:Number(dataView.getUint32(4,BIGendian)),
+	    FilesTotalSize:Number(dataView.getUint32(8,BIGendian)),
+	    JsonOffset:Number(dataView.getUint32(12,BIGendian)),
+	    JsonSize:Number(dataView.getUint32(16,BIGendian)),
+	    StringsOffset:Number(dataView.getUint32(20,BIGendian)),
+	    StringsSize:Number(dataView.getUint32(24,BIGendian))
+    };
+    return wmoheader;  
 }
 
 function readFilesHeader(filesBytes, hedrSize){
+	//NOTE: dataFromServer is expected to be an ArrayBuffer. 
+    //If not, first convert the dataFromServer into ArrayBuffer, then pass to this function.
 	var BIGendian = false;
 	var LITTLEendian = true;
-	let wmofHeaderBinary = new Uint32Array(filesBytes,0,(hedrSize/4));
-	let noOfFiles = Number(wmofHeaderBinary.getUint32(0,BIGendian));
+	let wmofHeaderBinary = new Uint8Array(filesBytes,0,(hedrSize+1));
+	let dataView = new DataView(wmofHeaderBinary.buffer);
+	let noOfFiles = Number(dataView.getUint8(0,BIGendian));
 	let filezheader = {
 		NumberOfFiles:noOfFiles,
-		FilesOffsets:Array.from(Uint32Array(filesBytes,1,noOfFiles)),
-		FilesSizes:Array.from(Uint32Array(filesBytes,(noOfFiles+1),noOfFiles))
+		FilesOffsets:Array.from(new Uint32Array(filesBytes,1,noOfFiles)),
+		FilesSizes:Array.from(new Uint32Array(filesBytes,(noOfFiles+1),noOfFiles)),
+		FilesTypes:Array.from(new Uint32Array(filesBytes,((2*noOfFiles)+1),noOfFiles))
 	};
 	return filezheader;
 }
@@ -486,14 +491,6 @@ class WebsocketMessageObject{
 	        return newStrMap[strkey];
 		}
 	  
-} 
-//++++++++++++++++++++++++++++++++++++++++++++++++++ end wmo ++++++++++++++++++++++++++++++++++++++++++++++++
-
-
-
-
-
- 
 } 
 //++++++++++++++++++++++++++++++++++++++++++++++++++ end wmo ++++++++++++++++++++++++++++++++++++++++++++++++
 

@@ -399,6 +399,20 @@ WebsocketMessageObject.prototype.DecodeString = (dataFromServer,strkey) => {
 	return newStrMap[strkey];
 }
 
+WebsocketMessageObject.prototype.FindFileTypeIndex = (filetype)=>{
+    for(var i in supportedFileTypes.filetypes){
+        if(filetype==supportedFileTypes.filetypes[i].type){
+            return i;
+        }
+    }
+    console.warn("Encoding/decoding of unsupported file type: '"+filetype+"' skipped.");
+    return 99;  //this will be used to indicate that file format is unsupported.
+};
+
+WebsocketMessageObject.prototype.toString = () => { 
+	return '[Object WebsocketMessageObject]';
+}
+
 //export default WebsocketMessageObject;
 //================================================================================================================ 
 
@@ -456,5 +470,3 @@ WebsocketMessageObject.prototype.DecodeString = (dataFromServer,strkey) => {
  	A handler for the progress event. This event is triggered while reading a Blob content.
  
  */
-
-

@@ -5,5 +5,3 @@ module.exports.typedArrayToString = (typedArr)=>{
     }
     return aString;
 }
-
-

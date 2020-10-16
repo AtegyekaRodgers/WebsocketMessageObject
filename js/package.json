@@ -1,0 +1,58 @@
+{
+  "_from": "websocket-message-object@^1.0.0",
+  "_id": "websocket-message-object@1.0.1",
+  "_inBundle": false,
+  "_integrity": "sha512-GfChNRyRAdwUZOq0tfQ4ZCrLEtN1kkrDaSpDI3s385cR0UPc6NBYbRUHp+vVtYdQsahk1uZAmAbwMNBi0aHXRA==",
+  "_location": "/websocket-message-object",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "websocket-message-object@^1.0.0",
+    "name": "websocket-message-object",
+    "escapedName": "websocket-message-object",
+    "rawSpec": "^1.0.0",
+    "saveSpec": null,
+    "fetchSpec": "^1.0.0"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/websocket-message-object/-/websocket-message-object-1.0.1.tgz",
+  "_shasum": "d7150e05c1b9a209f34d29df2e3099189085b4ac",
+  "_spec": "websocket-message-object@^1.0.0",
+  "_where": "/home/rodgers/Projects/React/rento-scanner",
+  "bugs": {
+    "url": "https://github.com/AtegyekaRodgers/WebsocketMessageObject/issues"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "Packages any data type of data into binary for transmission over websocket protocol",
+  "homepage": "https://github.com/AtegyekaRodgers/WebsocketMessageObject#readme",
+  "keywords": [
+    "websocket",
+    "message object",
+    "websocket object",
+    "websocket message",
+    "npm",
+    "package",
+    "wmo",
+    "ategyeka rodgers",
+    "rodgers wmo",
+    "npm package by rodgers",
+    "binary message",
+    "websocket binary data",
+    "binary",
+    "bonary in websocket",
+    "webscoket communication protocol"
+  ],
+  "license": "MIT",
+  "main": "wmo.js",
+  "name": "websocket-message-object",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AtegyekaRodgers/WebsocketMessageObject.git"
+  },
+  "version": "1.0.1"
+}

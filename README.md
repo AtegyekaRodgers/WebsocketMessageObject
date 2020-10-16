@@ -118,7 +118,7 @@ This is how to import the Go package into your project.
 Run this command:
 ```bash 
 
-$ go get "github.com/AtegyekaRodgers/WebsocketMessageObject"
+$ go get "github.com/AtegyekaRodgers/WebsocketMessageObject/go"
 
 ```
 Then import the package into your application
@@ -127,7 +127,7 @@ package main
 
 import (
   "fmt"
-  wmo "github.com/AtegyekaRodgers/WebsocketMessageObject"
+  wmo "github.com/AtegyekaRodgers/WebsocketMessageObject/go"
   //...
   //...
 )
@@ -137,4 +137,5 @@ func main(){
 }
 
 ```
+
 
