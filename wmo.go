@@ -1,4 +1,4 @@
-package websocketMessageObject
+package WebsocketMessageObject
 
 import (
 "fmt"
