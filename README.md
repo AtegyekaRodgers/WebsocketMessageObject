@@ -91,7 +91,7 @@ let jsondata = wmo.DecodeJson(messageFromServer);
 ```
 ```javascript 
 let mystr = wmo.DecodeString(messageFromServer, "key"); 
-// eg, let myname = wmo.DecodeString("name"); => returns a name such as 'Rodgers'
+// eg, let myname = wmo.DecodeString(messageFromServer, "name"); => returns a name such as 'Rodgers'
 ```
 ```javascript 
 let strMap = wmo.DecodeStringAll(messageFromServer);    
@@ -118,7 +118,7 @@ This is how to import the Go package into your project.
 Run this command:
 ```bash 
 
-$ go get "github.com/AtegyekaRodgers/WebsocketMessageObject/go"
+$ go get "github.com/AtegyekaRodgers/WebsocketMessageObject"
 
 ```
 Then import the package into your application
@@ -127,7 +127,7 @@ package main
 
 import (
   "fmt"
-  wmo "github.com/AtegyekaRodgers/WebsocketMessageObject/go"
+  wmo "github.com/AtegyekaRodgers/WebsocketMessageObject"
   //...
   //...
 )
