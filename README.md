@@ -77,10 +77,11 @@ wmo.AddFileFrom("file-input-id");
 ```
 ```javascript 
 wmo.AddJson({jsonobject});
+//eg. wmo.AddJson({name: "Rodgers", nationality: "Ugandan", title: "Software Engineer"});
 ```
 ```javascript 
 wmo.AddString("key","string you intend to add"); 
-// eg wmo.AddString("name","Rodgers"); 
+// eg wmo.AddString("name", "Rodgers"); 
 ```
 ```javascript 
 wmo.Encode();
