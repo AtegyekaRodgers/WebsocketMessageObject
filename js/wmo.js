@@ -2,7 +2,7 @@ var supportedFileTypes = require('./supported-file-types');
 var wmoUtils = require('./utils');
 
 // Public API
-module.exports = WebsocketMessageObject;
+//module.exports = WebsocketMessageObject;
  
 //=========================================================================================================
 let wmoHeader = {
@@ -15,13 +15,13 @@ let wmoHeader = {
 	StringsSize:0
 }; 
 
-function readWmoHeader(dataFromServer){ 
+function readWmoHeader(dataFromServer){
         //NOTE: dataFromServer is expected to be an ArrayBuffer. 
         //If not, first convert the dataFromServer into ArrayBuffer, then pass to this function. 
 	    var BIGendian = false;
 	    var LITTLEendian = true;
 	    let dataView = new DataView(dataFromServer);
-	    console.log("dataView.byteLength = "+dataView.byteLength);
+	    //console.log("dataView.byteLength = "+dataView.byteLength);
 	    let wmoheader = {
 		    FilesHeaderOffset:Number(dataView.getUint32(0,BIGendian)),
 		    FilesHeaderSize:Number(dataView.getUint32(4,BIGendian)),
@@ -31,6 +31,7 @@ function readWmoHeader(dataFromServer){
 		    StringsOffset:Number(dataView.getUint32(20,BIGendian)),
 		    StringsSize:Number(dataView.getUint32(24,BIGendian))
 	    };
+	     
 	    return wmoheader;  
 }
 
@@ -38,16 +39,35 @@ function readFilesHeader(filesBytes, hedrSize){
 	//NOTE: dataFromServer is expected to be an ArrayBuffer. 
     //If not, first convert the dataFromServer into ArrayBuffer, then pass to this function.
 	var BIGendian = false;
-	var LITTLEendian = true;
-	let wmofHeaderBinary = new Uint8Array(filesBytes,0,(hedrSize+1));
-	let dataView = new DataView(wmofHeaderBinary.buffer);
-	let noOfFiles = Number(dataView.getUint8(0,BIGendian));
+	var LITTLEendian = true; 
+	//read the headers part from the whole binary stream that contains files data and meta info.
+	let wmofHeaderBinary = new Uint8Array(filesBytes, 0, (hedrSize+1) );  
+	let dataView = new DataView(wmofHeaderBinary.buffer);  
+	let noOfFiles = Number(dataView.getUint8(0, BIGendian));
+	//the object to be returned:
 	let filezheader = {
 		NumberOfFiles:noOfFiles,
-		FilesOffsets:Array.from(new Uint32Array(filesBytes,1,noOfFiles)),
-		FilesSizes:Array.from(new Uint32Array(filesBytes,(noOfFiles+1),noOfFiles)),
-		FilesTypes:Array.from(new Uint32Array(filesBytes,((2*noOfFiles)+1),noOfFiles))
-	};
+		FilesOffsets:Array.from((new Uint32Array( filesBytes.slice(1, (4*noOfFiles)+1) )), ),
+		FilesSizes:Array.from((new Uint32Array( filesBytes.slice(1+(4*noOfFiles), ((4*noOfFiles)*2)+1) )), ),
+		FilesTypes:Array.from((new Uint32Array( filesBytes.slice(1+((4*noOfFiles)*2), ((4*noOfFiles)*3)+1) )), n=>Number(n) )
+		//FilesOffsets:Array.from((new Uint32Array( filesBytes.slice(1, (4*noOfFiles)+1) )), bits=>Number(bits) ),
+		//FilesSizes:Array.from((new Uint32Array( filesBytes.slice(1+(4*noOfFiles), ((4*noOfFiles)*2)+1) )), bits=>Number(bits) ),
+		//FilesTypes:Array.from((new Uint32Array( filesBytes.slice(1+((4*noOfFiles)*2), ((4*noOfFiles)*3)+1) )), bits=>Number(bits) )
+	};  
+	//convert all elements of the above 3 arrays into BIG endian, then into numbers/integers.
+	for (var k in filezheader.FilesOffsets){
+	    filezheader.FilesOffsets[k] = Number((new DataView( filesBytes.slice(1, ((4*noOfFiles)+1)) )).getUint32((4*k), BIGendian));
+	    filezheader.FilesSizes[k] = Number((new DataView( filesBytes.slice(1+(4*noOfFiles), ((4*noOfFiles)*2)+1) )).getUint32((4*k), BIGendian));
+	    filezheader.FilesTypes[k] = Number((new DataView( filesBytes.slice(1+((4*noOfFiles)*2), ((4*noOfFiles)*3)+1) )).getUint32((4*k), BIGendian));
+	}
+	 
+	console.log("wmo:___________________>>");
+	console.log("=filezheader.NumberOfFiles =", filezheader.NumberOfFiles);
+	console.log("=filezheader.FilesOffsets[0] =", filezheader.FilesOffsets[0]);
+	console.log("=filezheader.FilesSizes[0] =", filezheader.FilesSizes[0]);
+	console.log("=filezheader.FilesTypes[0] =", filezheader.FilesTypes[0]);
+	console.log("wmo: /__________________>>");
+	
 	return filezheader;
 }
 
@@ -65,18 +85,18 @@ function WebsocketMessageObject(objectname) {
 	this.filez = []; //array of files. functions will keep appending until Build() is called
 	this.jsonn = {}; //variable to hold jsob object. A function will set it before Build() is called
 	this.stringz = []; //array of strings. functions will keep appending until Build() is called
-}
+
  
 
 //--------Encoders--------
-WebsocketMessageObject.prototype.setFilesSize = function(size){ this._filezLength=size; }
-WebsocketMessageObject.prototype.setJsonSize = function(size){ this._jsonnLength=size; }
-WebsocketMessageObject.prototype.setStringsSize = function(size){ this._stringzLength=size; }
-WebsocketMessageObject.prototype.addToFilesSize = function(size){if(!isNaN(size)){ if(typeof(size)==="string"){size=Number(size);} this._filezLength+=size; }else{ console.log("'"+size+"'"+" is not a number. The function: '"+this.Objectname+".addToFilesSize()' expects a number ");} }                 
-WebsocketMessageObject.prototype.addToJsonSize = function(size){if(!isNaN(size)){ if(typeof(size)==="string"){size=Number(size);} this._jsonnLength+=size;}else{ console.log("'"+size+"'"+" is not a number. The function: '"+this.Objectname+".addToJsonSize()' expects a number. ");} }                    
-WebsocketMessageObject.prototype.addToStringsSize = function(size){if(!isNaN(size)){ if(typeof(size)==="string"){size=Number(size);} this._stringzLength+=size;}else{ console.log("'"+size+"'"+" is not a number. The function: '"+this.Objectname+".addToStringsSize()' expects a number ");} }  
+this.setFilesSize = function(size){ this._filezLength=size; }
+this.setJsonSize = function(size){ this._jsonnLength=size; }
+this.setStringsSize = function(size){ this._stringzLength=size; }
+this.addToFilesSize = function(size){if(!isNaN(size)){ if(typeof(size)==="string"){size=Number(size);} this._filezLength+=size; }else{ console.log("'"+size+"'"+" is not a number. The function: '"+this.Objectname+".addToFilesSize()' expects a number ");} }                 
+this.addToJsonSize = function(size){if(!isNaN(size)){ if(typeof(size)==="string"){size=Number(size);} this._jsonnLength+=size;}else{ console.log("'"+size+"'"+" is not a number. The function: '"+this.Objectname+".addToJsonSize()' expects a number. ");} }                    
+this.addToStringsSize = function(size){if(!isNaN(size)){ if(typeof(size)==="string"){size=Number(size);} this._stringzLength+=size;}else{ console.log("'"+size+"'"+" is not a number. The function: '"+this.Objectname+".addToStringsSize()' expects a number ");} }  
 
-WebsocketMessageObject.prototype.AddFile = function(file) {
+this.AddFile = function(file) {
 	if(file.name){
 		this.filez.push(file);
 		let file_size = file.size;
@@ -86,7 +106,7 @@ WebsocketMessageObject.prototype.AddFile = function(file) {
 	}
 };
 
-WebsocketMessageObject.prototype.AddFileFrom = function(fileInputId) {
+this.AddFileFrom = function(fileInputId) {
 	const file = document.getElementById(fileInputId).files[0];
 	if(file.name){
 		this.filez.push(file);
@@ -97,17 +117,17 @@ WebsocketMessageObject.prototype.AddFileFrom = function(fileInputId) {
 	}
 };
 
-WebsocketMessageObject.prototype.AddFiles = function(filesArray) {
+this.AddFiles = function(filesArray) {
 
 };
 
-WebsocketMessageObject.prototype.AddJson = function(myjson) {
+this.AddJson = function(myjson) {
 	this.jsonn = myjson;
 	let json_size = JSON.stringify(this.jsonn).length;
 	this.setJsonSize(json_size);
 };
 
-WebsocketMessageObject.prototype.AddString = function(keyy,mystring) {
+this.AddString = function(keyy,mystring) {
 	if (typeof(mystring)==='string') {
 		var str = keyy+'-'+mystring;
 		this.stringz.push(str);
@@ -120,7 +140,7 @@ WebsocketMessageObject.prototype.AddString = function(keyy,mystring) {
 	}
 };
 
-WebsocketMessageObject.prototype.AddStringFrom = function(keyy, textInputId) {
+this.AddStringFrom = function(keyy, textInputId) {
 	const strng = document.getElementById(textInputId).value;
 	if (typeof(strng)==='string') {
 		//append the string to stringz[] array of this object.
@@ -135,7 +155,7 @@ WebsocketMessageObject.prototype.AddStringFrom = function(keyy, textInputId) {
 	}
 };
  
-WebsocketMessageObject.prototype.Encode = function() {
+this.Encode = function() {
 	/*
               
 	0                    28   31               files-content         json                            strings
@@ -199,7 +219,7 @@ WebsocketMessageObject.prototype.Encode = function() {
 	  
 	  //ready to create the BinaryData
 	  this.BinaryData = new ArrayBuffer(31+size_of_files_header+this._filezLength+this._jsonnLength+this._stringzLength+8);  //8 is some extra just in case we need it.
-	  console.log("total size = "+(31+size_of_files_header+this._filezLength+this._jsonnLength+this._stringzLength+8));
+	  //console.log("total size = "+(31+size_of_files_header+this._filezLength+this._jsonnLength+this._stringzLength+8));
 	  let mainHeaderView = new Uint32Array(this.BinaryData, 0, 7);  //Uint32Array(buffer, offset, size); where 'size' is the number of items with the specific size eg 32 bits in this case.
 	  let endiannessView = new Uint8Array(this.BinaryData, 28, 1);
 	  let dontCareView = new Uint8Array(this.BinaryData, 29, 2);
@@ -210,11 +230,10 @@ WebsocketMessageObject.prototype.Encode = function() {
 	  let filesDataView = new Uint8Array(this.BinaryData, (32+(3*(4*numberoffilez))), this._filezLength);
 		let filesDataStart = (32+(3*(4*numberoffilez)));
 		wmo_offset_track=filesDataStart;
-	  let jsonDataView = new Uint8Array(this.BinaryData,(filesDataStart+this._filezLength), this._jsonnLength);
-	  console.log("jsonDataView.byteLength = "+jsonDataView.byteLength);
+	  let jsonDataView = new Uint8Array(this.BinaryData,(filesDataStart+this._filezLength), this._jsonnLength); 
 	  let jsonDataStart = (filesDataStart+this._filezLength);
 	  let stringsDataView = new Uint8Array(this.BinaryData,(jsonDataStart+this._jsonnLength), this._stringzLength);
-	  console.log("strings offset = "+(jsonDataStart+this._jsonnLength)+" - size="+(this._stringzLength));
+	  //console.log("strings offset = "+(jsonDataStart+this._jsonnLength)+" - size="+(this._stringzLength));
 	   
 	   //loop through files to get info about each of them,
 		//and write each into wmo.BinaryData.
@@ -296,43 +315,45 @@ WebsocketMessageObject.prototype.Encode = function() {
   endiannessView.set([(isLittleEndian?6:112)],0); 
 } 
 
-WebsocketMessageObject.prototype.toString = function () {
+this.toString = function () {
 	return '[object WebsocketMessageObject]';
 };
 
 
 //--------Decoders-------- 
-WebsocketMessageObject.prototype.DecodeJson = (dataFromServer) => { 
+this.DecodeJson = (dataFromServer) => { 
 	//NOTE: dataFromServer is expected to be an ArrayBuffer. 
     //If not, first convert the dataFromServer into ArrayBuffer, then pass to this function.
 	let wmoheader = readWmoHeader(dataFromServer);
 	let jsonvieww = new Uint8Array(dataFromServer,wmoheader.JsonOffset, wmoheader.JsonSize); 
-	let jsonstr = wmoUtils.typedArrayToString(jsonvieww);        
-	console.log("DecodeJson: jsonstr = "+jsonstr);
+	let jsonstr = wmoUtils.typedArrayToString(jsonvieww);
 	let jsonObject = JSON.parse(jsonstr);
 	return jsonObject;
 }
 
-WebsocketMessageObject.prototype.ReadFilesBytes = (dataFromServer) => {
+this.ReadFilesBytes = (dataFromServer) => {
 	//NOTE: dataFromServer is expected to be an ArrayBuffer. 
     //If not, first convert the dataFromServer into ArrayBuffer, then pass to this function.
-	let hedr = readWmoHeader(dataFromServer);
-	let filesDataArr = new Uint8Array(dataFromServer,hedr.FilesHeaderOffset, hedr.FilesTotalSize); 
-	return filesDataArr.buffer;
+	let hedr = readWmoHeader(dataFromServer); 
+	let filesDataArr = dataFromServer.slice(hedr.FilesHeaderOffset, hedr.FilesTotalSize); //hedr.FilesHeaderOffset = 31 always.
+	return filesDataArr;
 }
 
-WebsocketMessageObject.prototype.DecodeFiles = (dataFromServer, returnDataUrls) => {
+this.DecodeFiles = (dataFromServer, returnDataUrls=false) => {
 	//NOTE: dataFromServer is expected to be an ArrayBuffer. 
     //If not, first convert the dataFromServer into ArrayBuffer, then pass to this function.
     let types = supportedFileTypes.filetypes;
-    let preferDataUrls = returnDataUrls || true; //if false is passed, file objects will be returned instead of data URLs
-	var hedr = readWmoHeader(dataFromServer); 
-	var filesBytes = this.ReadFilesBytes(dataFromServer);
+    let preferDataUrls = returnDataUrls //if false is passed, file objects will be returned instead of data URLs
+	var hedr = readWmoHeader(dataFromServer);  
+	let filesBytes = this.ReadFilesBytes(dataFromServer); 
 	let files_hedr = readFilesHeader(filesBytes, hedr.FilesHeaderSize);
-	let filesWithKeys = [];
+	console.log("wmo: files_hedr = ", files_hedr);
+	console.log("wmo: files_hedr.FilesOffsets = ", files_hedr.FilesOffsets);
+	let filesWithKeys = []; 
 	for(var i in files_hedr.FilesOffsets){
-	    let oneFileTypedArr = new Uint8Array(filesBytes,files_hedr.FilesOffsets[i], files_hedr.FilesSizes[i]);
-	    //From the typedarray 'oneFileView', decode a single file and acquire its File boject or image URL 
+	    console.log("=for-loop: files_hedr.FilesOffsets ... ");
+	    let oneFileTypedArr = new Uint8Array( filesBytes.slice(files_hedr.FilesOffsets[i], (files_hedr.FilesOffsets[i] + files_hedr.FilesSizes[i] + 1) ) );
+	    //From the typedarray 'oneFileView', decode a single file and acquire its File object or image URL 
 	    /*
 	     * The File constructor (as well as the Blob constructor) takes an array of parts. 
 	     * A part doesn't have to be a DOMString. It can also be a Blob, File, or a typed array. 
@@ -340,40 +361,47 @@ WebsocketMessageObject.prototype.DecodeFiles = (dataFromServer, returnDataUrls) 
 	     * let file = new File([blob], "filename");
 	     * //---
 	     */
-	     var fyleDataType = types[FilesTypes[i]];
+	     var fyleDataType = types[files_hedr.FilesTypes[i]].type;
 	     let generateKey = (fyltype)=>{
 	        var offset = files_hedr.FilesOffsets[i];
 	        var sizze = files_hedr.FilesSizes[i];
 	        if(!Date.now){ Date.now = function(){return new Date().getTime(); }}
-	        var currentTimestamp = new Date.now(); 
-	        return fyltype+offset+sizze+currentTimestamp;
+	        var currentTimestamp = Date.now(); 
+	        return fyltype+"_"+offset+""+sizze+""+currentTimestamp; 
 	     }
 	     
-	     var blob = new Blob( [ oneFileTypedArr ], { type: "image/png" } );
+	     //var blob = new Blob( [ oneFileTypedArr ], { type: "image/png" } ); //can use this, but
+	     var blob = new Blob( [ oneFileTypedArr ], { type: fyleDataType } );  //this is more dynamc
 	     var filename = "file"+files_hedr.FilesOffsets[i]+files_hedr.FilesSizes[i];
-	     var file = new File([blob], filename, {type:"image/png", lastModified:new Date()});
+	     //var file = new File([blob], filename, {type:"image/png", lastModified:new Date()});
+	     var file = new File([blob], filename, {type:fyleDataType, lastModified:new Date()});
 	     var urlCreator = window.URL || window.webkitURL;
-	     var dataUrl = urlCreator.createObjectURL( blob );dataUrl
+	     var dataUrl = urlCreator.createObjectURL( blob );
 	     //generate a unique key for this file 
-	     let newKey = generateKey(fyleDataType);
-	     console.log("wmo.DecodeFiles generated a unique file key = "+newKey);
+	     //let newKey = generateKey(fyleDataType); 
+	     console.log("wmo: file key = ", i);
 	     //add the file data into the reuturned array with its generated key specified (associative array).
 	     if(preferDataUrls){
-	         filesWithKeys[newKey] = dataUrl;
+	         filesWithKeys[i] = dataUrl;
 	     }else{
-	         filesWithKeys[newKey] = file;
+	         filesWithKeys[i] = file;
 	     }
 	     /* 
 	     * let imageUrl = dataUrl;
 	     * var img = document.querySelector( "#photo" ); 
 	     * img.src = imageUrl;
 	     * urlCreator.revokeObjectURL(); 
-	     */ 
+	     */
+	     console.log("wmo: filesWithKeys.length : ");
+	     console.log(filesWithKeys.length);
+	     console.log("filesWithKeys[",i,"] : ");
+	     console.log(filesWithKeys[i]);
 	 }
+	 
 	 return filesWithKeys;
 }
 
-WebsocketMessageObject.prototype.DecodeStringAll = (dataFromServer) => {
+this.DecodeStringAll = (dataFromServer) => {
 	//NOTE: dataFromServer is expected to be an ArrayBuffer. 
     //If not, first convert the dataFromServer into ArrayBuffer, then pass to this function.
 	let wmoheader = readWmoHeader(dataFromServer);
@@ -382,7 +410,7 @@ WebsocketMessageObject.prototype.DecodeStringAll = (dataFromServer) => {
 	//split the 'stringz' content using dilimitors and create a map of strings with string keys.
 	let strArray = stringz.split(" "); //splitting using spaces: stringz = 'key1-value1 key2-value2 key3-value3 ...' 
 	var newStrMap = [];
-	strArray.forEach(function(key, val){
+	strArray.forEach(function(val){
 		if(val.includes("-")){
 			let strkey = val.split('-')[0];
 			let strval = val.split('-')[1];
@@ -392,14 +420,14 @@ WebsocketMessageObject.prototype.DecodeStringAll = (dataFromServer) => {
 	return newStrMap 
 }
 
-WebsocketMessageObject.prototype.DecodeString = (dataFromServer,strkey) => {
+this.DecodeString = (dataFromServer,strkey) => {
 	//NOTE: dataFromServer is expected to be an ArrayBuffer. 
     //If not, first convert the dataFromServer into ArrayBuffer, then pass to this function.
 	let newStrMap = this.DecodeStringAll(dataFromServer);
 	return newStrMap[strkey];
 }
 
-WebsocketMessageObject.prototype.FindFileTypeIndex = (filetype)=>{
+this.FindFileTypeIndex = (filetype)=>{
     for(var i in supportedFileTypes.filetypes){
         if(filetype==supportedFileTypes.filetypes[i].type){
             return i;
@@ -409,64 +437,15 @@ WebsocketMessageObject.prototype.FindFileTypeIndex = (filetype)=>{
     return 99;  //this will be used to indicate that file format is unsupported.
 };
 
-WebsocketMessageObject.prototype.toString = () => { 
+this.toString = () => { 
 	return '[Object WebsocketMessageObject]';
 }
 
-//export default WebsocketMessageObject;
-//================================================================================================================ 
+}
 
-/* 
- * 
- FileReader 
- METHODS:
- -------------------
- 
- FileReader.abort()
- 	Aborts the read operation. Upon return, the readyState will be DONE .
- 
- FileReader.readAsArrayBuffer()
- 	Starts reading the contents of the specified Blob , once finished, the result attribute
- 	contains an ArrayBuffer representing the file's data.
- 
- FileReader.readAsBinaryString()
- 	Starts reading the contents of the specified Blob , once finished, the result attribute
- 	contains the raw binary data from the file as a string.
- 
- FileReader.readAsDataURL()
- 	Starts reading the contents of the specified Blob , once finished, the result attribute
- 	contains a data: URL representing the file's data.
- 
- FileReader.readAsText()
- 	Starts reading the contents of the specified Blob , once finished, the result attribute
- 	contains the contents of the file as a text string. An optional encoding name can be
- 	specified.
- 	
- 	
- EVENT HANDLERS
- --------------
- 	
- 	FileReader.onabort
- 		A handler for the abort event. This event is triggered each time the reading operation is
- 		aborted.
- 		
- 	FileReader.onerror
- 		A handler for the error event. This event is triggered each time the reading operation
- 		encounter an error.
- 	
- 	FileReader.onload
- 		A handler for the load event. This event is triggered each time the reading operation is
- 		successfully completed.
- 	
- 	FileReader.onloadstart
- 		A handler for the loadstart event. This event is triggered each time the reading is
- 		starting.
- 	
- 	FileReader.onloadend
- 		A handler for the loadend event. This event is triggered each time the reading operation is
- 		completed (either in success or failure).
- 	
- 	FileReader.onprogress
- 	A handler for the progress event. This event is triggered while reading a Blob content.
- 
- */
+//export const wmo = new WebsocketMessageObject(); //uncomment this line if you don't want to create an object yourself from your application.
+
+export WebsocketMessageObject;  //use this if you want to create your own object like: let wmo = new WebsocketMessageObject();
+
+//========================================================END========================================================
+
