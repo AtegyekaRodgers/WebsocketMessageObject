@@ -135,7 +135,7 @@ func (wmo *WebsocketMessageObject) DecodeJson(dataFromClient []byte) string {
 	return jsonstr 
 }
 
-func (wmo *WebsocketMessageObject) ReadFilesBytes(dataFromClient []byte) ([]byte,uint32) {
+func (wmo *WebsocketMessageObject) ReadFilesBytes(dataFromClient []byte) ([]byte, uint32) {
 	hedr := readWmoHeader(dataFromClient)
 	fReader := bytes.NewBuffer(dataFromClient[hedr.FilesHeaderOffset:(hedr.FilesHeaderOffset+hedr.FilesTotalSize)])
 	fBuf := make([]byte, hedr.FilesTotalSize)
@@ -171,7 +171,9 @@ func (wmo *WebsocketMessageObject) DecodeStringAll(dataFromClient []byte) map[st
 	newStrMap := map[string]string{}
 	for _, keyAndVal := range strArray {
 		strkey := strings.Split(keyAndVal,"-")[0]
-		strval := strings.Split(keyAndVal,"-")[1]
+		arr := strings.Split(keyAndVal,"-")
+		strval := ""
+		if len(arr)>1 {strval = arr[1]; }
 		newStrMap[strkey] = strval
 	}
 	return newStrMap 
@@ -306,6 +308,7 @@ func (wmo *WebsocketMessageObject) Encode() {
 	files_ofst_track = 0 + size_of_files_header 
 	   
 	for _, fi := range wmo.filez {
+		log.Println("---vvv forloop runs, numberoffilez=", numberoffilez) 
 		fileinfo, err := fi.Stat()
 		if err != nil {
 			log.Fatal(err)
@@ -344,19 +347,22 @@ func (wmo *WebsocketMessageObject) Encode() {
 		fileTypesMultiReader = io.MultiReader(file_type_readers...)
 		no_of_files_reader = bytes.NewReader(Uint8toBinary(uint8(numberoffilez)))
 		allFilesDataReader = io.MultiReader(no_of_files_reader,fileOffsetsMultiReader,fileSizesMultiReader,fileTypesMultiReader,filesDataMultiReader)
-	}else{
+	}else{ 
 		no_of_files_reader = bytes.NewReader(Uint8toBinary(uint8(numberoffilez))) 
 		newreadr := bytes.NewBuffer(wmo.Fdata)
-		if len(newreadr.Bytes()) > 0 {
+		if len(newreadr.Bytes()) > 0 { 
 		  allFilesDataReader = newreadr 
-		  nofbyteReader := bytes.NewReader(wmo.Fdata[:1]) //byte bits representing number of files
-		  var nof uint8
-		  _ = binary.Read(nofbyteReader,binary.BigEndian,nof) // decode into a uint8 number
-		  size_of_files_header = uint32(uint8(1)+(nof*uint8(4+4+4))) //calculate size of files header using number of files value 
-		}else{
+		  nofbyteReader := bytes.NewReader(wmo.Fdata[:1]) //byte bits representing number of files 
+		  var nof uint8 
+		  _ = binary.Read(nofbyteReader, binary.BigEndian, &nof) // decode into a uint8 number
+		  size_of_files_header = uint32(1+(int(nof)*(4+4+4))) //calculate size of files header using number of files value 
+		  log.Println("wmo: <>--- size_of_files_header = ", size_of_files_header, "nof=",nof, "uint8(4+4+4)=",uint8(4+4+4),"uint8(1)=",uint8(1))
+		  log.Println("wmo: 1 + (int(nof)*(4+4+4))=",1+(int(nof)*(4+4+4)))
+		  log.Println("wmo: ",uint8(1),"+ (",nof,"*",uint8(4+4+4),")=",(int(1)+(int(nof)*int(4+4+4)))) 
+		}else{ 
 		    allFilesDataReader = no_of_files_reader
 		} 
-		total_size_of_files = uint32(len(wmo.Fdata))
+		total_size_of_files = uint32(len(wmo.Fdata)) 
 		if total_size_of_files > 1 {
 		    wmo_offset_track += (total_size_of_files-1)
 		}else{
@@ -391,7 +397,7 @@ func (wmo *WebsocketMessageObject) Encode() {
 	 
 	//readers for all wmo header values 
 	start_of_files_reader := bytes.NewReader(Uint32toBinary(uint32(31))) //31 => filez_start_point  
-	size_of_files_header_reader := bytes.NewReader(Uint32toBinary(uint32(size_of_files_header))) 
+	size_of_files_header_reader := bytes.NewReader(Uint32toBinary(size_of_files_header)) 
 	total_size_of_files_reader := bytes.NewReader(Uint32toBinary(uint32(total_size_of_files)))  
 	json_start_point_reader := bytes.NewReader(Uint32toBinary(uint32(json_start_point)))  
 	json_size_reader := bytes.NewReader(Uint32toBinary(uint32(json_size))) 
@@ -414,7 +420,7 @@ func (wmo *WebsocketMessageObject) Encode() {
 	_ = binary.Read(tempBufferReader, binary.BigEndian, &fixedSizebuffer)
 	wmo.BinaryData = fixedSizebuffer 
 	  
-    log.Println("wmo.BinaryData = ",wmo.BinaryData) 
+    log.Println("wmo.BinaryData = ",wmo.BinaryData[:100], "...") 
     //TODO: empty all the other wmo variables except wmo.BinaryData. ie, empty: wmo.filez, wmo.stringz, wmo.jsonn, etc
     //...
        
